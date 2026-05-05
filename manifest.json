@@ -1,7 +1,7 @@
 {
   "name": "Je online? 💻",
   "short_name": "PC Status",
-  "start_url": "/",
+  "start_url": "/pc-status-frontend/",
   "display": "standalone",
   "background_color": "#0a0a14",
   "theme_color": "#0a0a14",
