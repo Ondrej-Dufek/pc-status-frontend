@@ -348,7 +348,7 @@
       <div class="value" id="lastSeen">—</div>
     </div>
     <div class="stat-box">
-      <div class="label">Hraje od</div>
+      <div class="label">Hraje</div>
       <div class="value" id="sessionTime">—</div>
     </div>
   </div>
@@ -369,7 +369,8 @@
 </div>
 
 <script>
-  const SERVER = "https://pc-status-backend.onrender.com";
+  const SERVER = "https://TVŮJ-SERVER.onrender.com"; // <-- URL z Render
+
   function timeAgo(isoString) {
     if (!isoString) return "—";
     const diff = Math.floor((Date.now() - new Date(isoString)) / 1000);
@@ -378,9 +379,14 @@
     return Math.floor(diff / 3600) + "h " + Math.floor((diff % 3600) / 60) + "min";
   }
 
-  function timeOfDay(isoString) {
+  function sessionDuration(isoString) {
     if (!isoString) return "—";
-    return new Date(isoString).toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" });
+    const diff = Math.floor((Date.now() - new Date(isoString)) / 1000);
+    if (diff < 60) return diff + "s";
+    const h = Math.floor(diff / 3600);
+    const m = Math.floor((diff % 3600) / 60);
+    if (h > 0) return h + "h " + m + "min";
+    return m + "min";
   }
 
   async function fetchStatus() {
@@ -426,7 +432,7 @@
       }
 
       document.getElementById("lastSeen").textContent = timeAgo(data.last_seen);
-      document.getElementById("sessionTime").textContent = timeOfDay(data.session_start);
+      document.getElementById("sessionTime").textContent = data.session_start ? sessionDuration(data.session_start) : "—";
 
       // Restart auto-bar
       const bar = document.getElementById("autoBar");
