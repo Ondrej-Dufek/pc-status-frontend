@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Je online? 💻</title>
+  <meta name="theme-color" content="#0f0f1a" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a14;
+      --surface: #12121f;
+      --border: #1e1e35;
+      --online: #00ffaa;
+      --offline: #ff4466;
+      --game: #7c6cff;
+      --muted: #4a4a6a;
+      --text: #e8e8ff;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Animated background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(124,108,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,108,255,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      animation: gridMove 20s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes gridMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 40px 40px; }
+    }
+
+    /* Glow blob */
+    .glow-blob {
+      position: fixed;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.15;
+      pointer-events: none;
+      transition: background 1s ease;
+    }
+    .glow-blob.top { top: -100px; right: -100px; }
+    .glow-blob.bottom { bottom: -100px; left: -100px; }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: min(90vw, 380px);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    .header h1 {
+      font-size: 13px;
+      font-family: 'Space Mono', monospace;
+      color: var(--muted);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    /* Main status card */
+    .status-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .status-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent 60%, rgba(124,108,255,0.05));
+      pointer-events: none;
+    }
+
+    /* Big status indicator */
+    .status-orb {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      position: relative;
+      transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .status-orb.online {
+      background: rgba(0, 255, 170, 0.1);
+      box-shadow: 0 0 0 8px rgba(0,255,170,0.07), 0 0 40px rgba(0,255,170,0.2);
+    }
+
+    .status-orb.offline {
+      background: rgba(255, 68, 102, 0.1);
+      box-shadow: 0 0 0 8px rgba(255,68,102,0.07), 0 0 40px rgba(255,68,102,0.15);
+    }
+
+    .status-orb.loading {
+      background: rgba(124,108,255,0.1);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 8px rgba(124,108,255,0.05); }
+      50% { box-shadow: 0 0 0 16px rgba(124,108,255,0.12); }
+    }
+
+    /* Ping ring animation when online */
+    .status-orb.online::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px solid rgba(0,255,170,0.4);
+      animation: ping 2s ease-out infinite;
+    }
+
+    @keyframes ping {
+      0% { transform: scale(1); opacity: 0.8; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+
+    .status-label {
+      text-align: center;
+    }
+
+    .status-label .main {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1;
+      transition: color 0.5s;
+    }
+    .status-label .main.online { color: var(--online); }
+    .status-label .main.offline { color: var(--offline); }
+    .status-label .main.loading { color: var(--muted); }
+
+    .status-label .sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+      font-family: 'Space Mono', monospace;
+    }
+
+    /* Game chip */
+    .game-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(124,108,255,0.12);
+      border: 1px solid rgba(124,108,255,0.25);
+      border-radius: 50px;
+      padding: 10px 18px;
+      width: 100%;
+      justify-content: center;
+      transition: all 0.4s ease;
+    }
+
+    .game-chip.hidden { opacity: 0; transform: translateY(8px); }
+    .game-chip.visible { opacity: 1; transform: translateY(0); }
+
+    .game-chip .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--game);
+      animation: blink 1.2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .game-chip .game-name {
+      font-weight: 700;
+      font-size: 15px;
+      color: #b8b0ff;
+    }
+
+    /* Stats row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .stat-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat-box .label {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .stat-box .value {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Refresh button */
+    .refresh-btn {
+      width: 100%;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .refresh-btn:hover {
+      border-color: rgba(124,108,255,0.4);
+      color: var(--text);
+      background: rgba(124,108,255,0.06);
+    }
+
+    .refresh-btn:active { transform: scale(0.98); }
+
+    .refresh-btn.spinning svg {
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Auto-refresh indicator */
+    .auto-bar {
+      height: 2px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: -8px;
+    }
+    .auto-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--game), var(--online));
+      transform-origin: left;
+      animation: countdown 15s linear infinite;
+    }
+    @keyframes countdown {
+      from { transform: scaleX(1); }
+      to { transform: scaleX(0); }
+    }
+
+    /* Install PWA banner */
+    .install-banner {
+      background: rgba(124,108,255,0.08);
+      border: 1px solid rgba(124,108,255,0.2);
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      display: none;
+    }
+    .install-banner.show { display: block; }
+    .install-banner strong { color: #b8b0ff; }
+  </style>
+</head>
+<body>
+
+<div class="glow-blob top" id="blobTop"></div>
+<div class="glow-blob bottom" id="blobBottom"></div>
+
+<div class="container">
+  <div class="header">
+    <h1>⚡ PC Status Monitor</h1>
+  </div>
+
+  <div class="status-card">
+    <div class="status-orb loading" id="statusOrb">⏳</div>
+    <div class="status-label">
+      <div class="main loading" id="statusText">Načítám...</div>
+      <div class="sub" id="statusSub">připojuji se k serveru</div>
+    </div>
+    <div class="game-chip hidden" id="gameChip">
+      <div class="dot"></div>
+      <div class="game-name" id="gameName">—</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="label">Poslední aktivita</div>
+      <div class="value" id="lastSeen">—</div>
+    </div>
+    <div class="stat-box">
+      <div class="label">Hraje od</div>
+      <div class="value" id="sessionTime">—</div>
+    </div>
+  </div>
+
+  <div class="auto-bar"><div class="auto-bar-fill" id="autoBar"></div></div>
+
+  <button class="refresh-btn" id="refreshBtn" onclick="fetchStatus()">
+    <svg id="refreshIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="23 4 23 10 17 10"></polyline>
+      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+    </svg>
+    Obnovit
+  </button>
+
+  <div class="install-banner" id="installBanner">
+    📱 <strong>Tip:</strong> Přidej si stránku na plochu – funguje jako appka!
+  </div>
+</div>
+
+<script>
+  const SERVER = "https://pc-status-backend.onrender.com";
+  function timeAgo(isoString) {
+    if (!isoString) return "—";
+    const diff = Math.floor((Date.now() - new Date(isoString)) / 1000);
+    if (diff < 60) return diff + "s";
+    if (diff < 3600) return Math.floor(diff / 60) + "min";
+    return Math.floor(diff / 3600) + "h " + Math.floor((diff % 3600) / 60) + "min";
+  }
+
+  function timeOfDay(isoString) {
+    if (!isoString) return "—";
+    return new Date(isoString).toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" });
+  }
+
+  async function fetchStatus() {
+    const btn = document.getElementById("refreshBtn");
+    btn.classList.add("spinning");
+
+    try {
+      const res = await fetch(`${SERVER}/status`);
+      const data = await res.json();
+
+      const orb = document.getElementById("statusOrb");
+      const text = document.getElementById("statusText");
+      const sub = document.getElementById("statusSub");
+      const chip = document.getElementById("gameChip");
+      const gameName = document.getElementById("gameName");
+      const blobTop = document.getElementById("blobTop");
+      const blobBottom = document.getElementById("blobBottom");
+
+      if (data.online) {
+        orb.className = "status-orb online";
+        orb.textContent = "🖥️";
+        text.className = "main online";
+        text.textContent = "Online";
+        sub.textContent = "PC je zapnutý";
+        blobTop.style.background = "#00ffaa";
+        blobBottom.style.background = "#7c6cff";
+      } else {
+        orb.className = "status-orb offline";
+        orb.textContent = "💤";
+        text.className = "main offline";
+        text.textContent = "Offline";
+        sub.textContent = "PC je vypnutý";
+        blobTop.style.background = "#ff4466";
+        blobBottom.style.background = "#ff4466";
+        chip.className = "game-chip hidden";
+      }
+
+      if (data.game) {
+        gameName.textContent = data.game;
+        chip.className = "game-chip visible";
+      } else if (data.online) {
+        chip.className = "game-chip hidden";
+      }
+
+      document.getElementById("lastSeen").textContent = timeAgo(data.last_seen);
+      document.getElementById("sessionTime").textContent = timeOfDay(data.session_start);
+
+      // Restart auto-bar
+      const bar = document.getElementById("autoBar");
+      bar.style.animation = "none";
+      bar.offsetHeight; // reflow
+      bar.style.animation = "";
+
+    } catch (e) {
+      document.getElementById("statusText").textContent = "Chyba";
+      document.getElementById("statusSub").textContent = "Nelze se připojit k serveru";
+    }
+
+    btn.classList.remove("spinning");
+  }
+
+  // Auto-refresh every 15s
+  fetchStatus();
+  setInterval(fetchStatus, 15000);
+
+  // PWA install hint
+  if (window.matchMedia("(display-mode: browser)").matches && /Mobi|Android/i.test(navigator.userAgent)) {
+    document.getElementById("installBanner").classList.add("show");
+  }
+</script>
+
+</body>
+</html>

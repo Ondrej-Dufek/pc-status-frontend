@@ -1,0 +1,16 @@
+{
+  "name": "Je online? 💻",
+  "short_name": "PC Status",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a14",
+  "theme_color": "#0a0a14",
+  "description": "Sleduj jestli má přítel zapnutý počítač a co hraje",
+  "icons": [
+    {
+      "src": "https://api.dicebear.com/7.x/icons/svg?seed=monitor&backgroundColor=0a0a14",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}
